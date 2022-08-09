@@ -20,6 +20,13 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories
     public abstract class BaseRepository<T> : IRepository<T>
         where T : TableEntity, new()
     {
+        /// <summary>
+        /// Maximum length of error and warning messages to save in the entity.
+        /// This limit ensures that we don't hit the Azure table storage limits for the max size of the data
+        /// in a column, and the total size of an entity.
+        /// </summary>
+        public const int MaxMessageLengthToSave = 1024;
+
         private readonly string defaultPartitionKey;
 
         /// <summary>
@@ -137,6 +144,22 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories
                 var combinedFilter = this.CombineFilters(filter, partitionKeyFilter);
                 var query = new TableQuery<T>().Where(combinedFilter);
                 var entities = await this.ExecuteQueryAsync(query, count);
+                return entities;
+            }
+            catch (Exception ex)
+            {
+                this.Logger.LogError(ex, ex.Message);
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<T>> GetWithFilterWithoutPartitionAsync(string filter)
+        {
+            try
+            {
+                var query = new TableQuery<T>().Where(filter);
+                var entities = await this.ExecuteQueryAsync(query);
                 return entities;
             }
             catch (Exception ex)

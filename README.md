@@ -1,6 +1,6 @@
 # Company Communicator App Template
 
-| [Documentation](https://github.com/OfficeDev/microsoft-teams-company-communicator-app/wiki) | [Deployment guide](https://github.com/cristianoag/microsoft-teams-apps-company-communicator/wiki/Deployment-Guide) | [Deployment guide powershell](https://github.com/OfficeDev/microsoft-teams-company-communicator-app/wiki/Deployment-guide-powershell)  | [Architecture](https://github.com/OfficeDev/microsoft-teams-company-communicator-app/wiki/Solution-overview) |
+| [Documentation](https://github.com/cristianoag/microsoft-teams-apps-company-communicator/wiki) | [Deployment guide](https://github.com/cristianoag/microsoft-teams-apps-company-communicator/wiki/Deployment-Guide) | [Deployment guide powershell](https://github.com/cristianoag/microsoft-teams-apps-company-communicator/wiki/Deployment-guide-powershell)  | [Architecture](https://github.com/cristianoag/microsoft-teams-apps-company-communicator/wiki/Solution-overview) |
 | ---- | ---- | ---- | ---- |
 
 Company Communicator is a custom Teams app that enables corporate teams to create and send messages intended for multiple teams or large number of employees over chat allowing organization to reach employees right where they collaborate. Use this template for multiple scenarios, such as new initiative announcements, employee onboarding, modern learning and development, or organization-wide broadcasts. 
@@ -19,9 +19,24 @@ The app provides an easy interface for designated users to create, preview, coll
 Begin with the [Solution overview](https://github.com/OfficeDev/microsoft-teams-company-communicator-app/wiki/Solution-overview) to read about what the app does and how it works.
 
 When you're ready to try out Company Communicator, or to use it in your own organization, you can choose to follow one of the below guides.
-* [Deployment guide](https://github.com/cristianoag/microsoft-teams-apps-company-communicator/wiki/Deployment-Guide).
-* [Deployment guide powershell](https://github.com/OfficeDev/microsoft-teams-company-communicator-app/wiki/Deployment-guide-powershell).  
-  
+* [Deployment guide powershell](https://github.com/cristianoag/microsoft-teams-company-communicator-app/wiki/Deployment-guide-powershell).
+    * **Recommended** Use this option to deploy the Company Communicator v5.0 using powershell script. The entire set-up is done by the powershell script.
+* [Deployment guide](https://github.com/cristianoag/microsoft-teams-company-communicator-app/wiki/Deployment-guide).
+    * Use this option to deploy the Company Communicator v5.0 with client secrets.
+* [Deployment guide certificate](https://github.com/cristianoag/microsoft-teams-company-communicator-app/wiki/Deployment-guide-certificate).
+    * Use this option to deploy the Company Communicator v5.0 with certificates.
+
+## Migration 
+
+If you already have older version of Company Communicator installed, then please use this [v5 migration guide](https://github.com/OfficeDev/microsoft-teams-apps-company-communicator/wiki/v5-migration-guide). Please note that deploying the major version update, like Company Communicator version 5.0 involves more than syncing the App Service and Azure Functions, so plan to review the migration guide before migrating to latest. 
+
+Migrating to newer versions. 
+
+ * [v5 migration guide](https://github.com/cristianoag/microsoft-teams-apps-company-communicator/wiki/v5-migration-guide)
+ * [v4 migration guide](https://github.com/OfficeDev/microsoft-teams-apps-company-communicator/wiki/v4-migration-guide)
+ * [v3 migration guide](https://github.com/OfficeDev/microsoft-teams-apps-company-communicator/wiki/v3-migration-guide)
+ * [v2 migration guide](https://github.com/OfficeDev/microsoft-teams-apps-company-communicator/wiki/v2-migration-guide)
+
 ## Feedback
 
 Thoughts? Questions? Ideas? Share them with us on [Teams UserVoice](https://microsoftteams.uservoice.com/forums/555103-public)!
@@ -61,6 +76,42 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 ## Community Fork Changes
 
 This is the log of changes implemented for Company Communicator.
+
+**v5.13**
+  - Reactions to messages sent by the bot are now tracked to the database. Reports can be created using Power BI connected directly to the Azure Storage Account or the CSV file with the information can be exported to be analized on Excel. 
+  - The CSV report exported by authors now includes information on Reactions.
+
+**v5.12**
+  - The CSV report exported by authors now includes information on ReadStatus and ButtonTracking. That will make easier for author to create simple reports without Power BI or accessing directly the database. 
+
+**v5.11**
+  - ATTENTION!!! - Merge of v5.1. If you have a deployment based on v4.XX you need to follow instructions [v5 migration guide](https://github.com/cristianoag/microsoft-teams-apps-company-communicator/wiki/v5-migration-guide) to update your setup.
+  - Inclusion of the MasterAdminUpns and TargetingEnabled variables to the deployment template, those variables will be available during setup moving forward.
+
+**v4.51**
+- Fix for the fsevents issue
+- Fix for the image expansion control when cards with buttons are created
+
+**v4.5**
+- Merge of PR to implement select/unselect buttons to control the inclusion of multiple Teams that are enabled for posting messages by setting-up the user bot.
+
+**v4.45**
+- Button urls with multiple parameters on the querystring were being stripped out when clicking on the buttons by the button tracking mechanism. Changed the code to encode the URL when sending the card and decoding it just before redirect inside the tracking code.
+- Fix for the issue that was opening blank pages when clicking buttons during the message preview.
+
+**v4.44**
+- When uploading a CSV file and then a second one to replace the first, the upload box was staying in error state. Fix the error handling when uploading CSV files to allow uploading CSV files multiple times to replace previous versions. Cause by the changes on the way we account the image file size vs the card size. 
+
+**v4.43**
+- Fix to trail spaces after separators (, or ;) when specifying multiple masteradminupns in the app service configuration variable
+- When upload blob storage is enabled, the size of the image was being accounted and blocking the upload of CSV files due to size restrictions. Now when enabling blob storage upload for images, the size of the image is not being discounted from the card size. That allows upload of CSV files up to the limit of the card (~30k).
+
+**v4.42**
+- Change to allow expansion of images in adaptive cards as described in https://devblogs.microsoft.com/microsoft365dev/five-new-features-enhancing-adaptive-cards-in-microsoft-teams/. This is to allow users better read content in high resolution images.
+- Update to the CSV upload function to deal with files generated by excel (single column CSV files with tab delimiters instead of commas). CSV parser now validates files with tab or comma separators.
+
+**v4.41**
+- Fix to ensure the azure functions are using the right version of MSBuild. Avoid errors when compiling the code during sync process due to updates made to the AdaptiveCard library.
 
 **v4.40**
 - Implemented the App Service config variable DisableReadTracking to disable message read tracking. That is because we have some customers that installed CC in a S1/Small instance and that config doesn't support the additional load imposed by the read tracking mechanism.

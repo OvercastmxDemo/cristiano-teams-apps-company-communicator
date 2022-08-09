@@ -100,6 +100,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.SentNotif
         public string RecipientId { get; set; }
 
         /// <summary>
+        /// Gets or sets the activity unique identifier.
+        /// </summary>
+        public string ActivityId { get; set; }
+
+        /// <summary>
         /// Gets or sets the total number of throttle responses the bot received when trying
         /// to send the notification to this recipient.
         /// Note: This does not include throttle responses received when creating the conversation.
@@ -197,6 +202,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.SentNotif
         public string ErrorMessage { get; set; }
 
         /// <summary>
+        /// Gets or sets the exception details for the user.
+        /// </summary>
+        public string Exception { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether a specific message instance was read by the user.
         /// </summary>
         public bool ReadStatus { get; set; }
@@ -206,9 +216,14 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.SentNotif
         /// </summary>
         public DateTime? ReadDate { get; set; }
 
-                /// <summary>
+        /// <summary>
         /// Gets or sets a value with the JSON describing the tracking of the buttons clicked.
         /// </summary>
         public string ButtonTracking { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value with the reaction for the message (type for 1:1, JSON for channel posted messages).
+        /// </summary>
+        public string Reactions { get; set; }
     }
 }

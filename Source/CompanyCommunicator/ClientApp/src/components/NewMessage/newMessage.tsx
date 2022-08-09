@@ -17,7 +17,10 @@ import { getInitAdaptiveCard, setCardTitle, setCardImageLink, setCardSummary, se
 import { getBaseUrl } from '../../configVariables';
 import { ImageUtil } from '../../utility/imageutility';
 import { TFunction } from "i18next";
+import { OpenUrlAction } from 'adaptivecards';
 
+import axios from '../../apis/axiosJWTDecorator';
+let baseAxiosUrl = getBaseUrl() + '/api';
 
 //hours to be chosen when scheduling messages
 const hours = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11",
@@ -115,6 +118,8 @@ export interface formState {
     userPrincipalName?: string,
     channelTitle?: string, //channel title to be used on the customized card, if targeting is enabled
     channelImage?: string, //channel image to be used on the customized card, if targeting is enabled
+    maxNumberOfTeams: number, //maximum number of teams that can be selected to receive a message
+    isMaxNumberOfTeamsError: boolean
 }
 
 export interface INewMessageProps extends RouteComponentProps, WithTranslation {
@@ -185,6 +190,8 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             channelId: "", //channel id is empty by default
             channelTitle: "",
             channelImage: "",
+            maxNumberOfTeams: 20,
+            isMaxNumberOfTeamsError: false
         }
         this.fileInput = React.createRef();
         this.CSVfileInput = React.createRef();
@@ -200,6 +207,17 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         document.addEventListener("keydown", this.escFunction, false);
         let params = this.props.match.params;
         this.setGroupAccess();
+
+        //get the maximum number of teams that can receive a message
+        let url = baseAxiosUrl + "/options";
+    
+        try {
+            var response = await axios.get(url);
+            this.setState({maxNumberOfTeams: response.data});
+        }
+        catch {
+            this.setState({maxNumberOfTeams: response.data})
+        }
 
         // get teams context variables and store in the state
         microsoftTeams.getContext(context => {
@@ -287,7 +305,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
     //returns true if the userUpn is listed on masterAdminUpns
     private isMasterAdmin = (masterAdminUpns: string, userUpn?: string) => {
         var ret = false; // default return value
-        var masterAdmins = masterAdminUpns.toLowerCase().split(/;|,/); //splits the string and convert to lowercase
+        var masterAdmins = masterAdminUpns.toLowerCase().split(/;|,/).map(element => element.trim()); //splits the string and convert to lowercase
         //if we get a userUpn as parameter
         if (userUpn) {
             //gets the index of the user on the master admin array
@@ -320,14 +338,13 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         if (file) { //if we have a file
             var cardsize = JSON.stringify(this.card).length;
             if (this.imageUploadBlobStorage) {
-                //alert(file.toString('base64'));
                 var that = this;
                 var reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onloadend = function () {
                     var base64String = reader.result;
-                    //alert(base64String);
                     that.imageSize = base64String.toString().length;
+                    cardsize = cardsize - that.imageSize;
                     setCardImageLink(that.card, base64String.toString());
                     that.updateCard();
                     that.setState({
@@ -359,14 +376,18 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
 
     //Function to handle the CSV File selection
     private handleCSVSelection() {
-        //get the first file selected
+        //get the first file sealected
         const file = this.CSVfileInput.current.files[0];
         //if we have a file
         if (file) {
             var cardsize = JSON.stringify(this.card).length;
-
+            if (this.imageUploadBlobStorage) {
+                cardsize = cardsize - this.imageSize;
+            }
             //parses the CSV file using papa parse library
             Papa.parse(file, {
+                skipEmptyLines: true,
+                delimiter:"\t",
                 complete: ({ errors, data }) => {
 
                     if (errors.length > 0) {
@@ -417,11 +438,11 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
     private handleCSVUploadClick = (event: any) => {
         this.setState({
             csvLoaded: "",
-            csvError: true,
+            csvError: false,
             csvusers: ""
         });
 
-        //fire the fileinput click event and run the handle the CSV function
+        //fire the csvfileinput click event and run the handle the CSV function
         this.CSVfileInput.current.click();
     };
 
@@ -755,6 +776,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                 <Flex.Item size="size.half">
                                     <Flex column className="formContentContainer">
                                         <h3>{this.localize("SendHeadingText")}</h3>
+                                        <Text content={this.localize("MaxTeamsError")} hidden={!this.state.isMaxNumberOfTeamsError} error />
                                         <RadioGroup
                                             className="radioBtns"
                                             checkedValue={this.state.selectedRadioBtn}
@@ -771,6 +793,10 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                                         return (
                                                             <Flex key={name} column>
                                                                 <Component {...props} />
+                                                                <Flex className="selectTeamsContainer" gap="gap.small" hidden={!this.state.teamsOptionSelected}>
+                                                                    <Button content={this.localize("SelectAll")} onClick={this.onSelectAllTeams} />
+                                                                    <Button content={this.localize("UnselectAll")} onClick={this.onUnselectAllTeams} />
+                                                                </Flex>  
                                                                 <Dropdown
                                                                     hidden={!this.state.teamsOptionSelected}
                                                                     placeholder={this.localize("SendToGeneralChannelPlaceHolder")}
@@ -796,6 +822,10 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                                         return (
                                                             <Flex key={name} column>
                                                                 <Component {...props} />
+                                                                <Flex className="selectTeamsContainer" gap="gap.small" hidden={!this.state.rostersOptionSelected}>
+                                                                    <Button content={this.localize("SelectAll")} onClick={this.onSelectAllRosters} />
+                                                                    <Button content={this.localize("UnselectAll")} onClick={this.onUnselectAllRosters}  />
+                                                                </Flex>
                                                                 <Dropdown
                                                                     hidden={!this.state.rostersOptionSelected}
                                                                     placeholder={this.localize("SendToRostersPlaceHolder")}
@@ -1153,7 +1183,9 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         const groupsSelectionIsValid = (this.state.groupsOptionSelected && (this.state.selectedGroupsNum !== 0)) || (!this.state.groupsOptionSelected);
         const csvSelectionIsValid = (!(this.state.csvError) && (!(this.state.csvLoaded === "") && this.state.csvOptionSelected)) || (!this.state.csvOptionSelected);
         const nothingSelected = (!this.state.teamsOptionSelected) && (!this.state.rostersOptionSelected) && (!this.state.groupsOptionSelected) && (!this.state.allUsersOptionSelected) && (!this.state.csvOptionSelected);
-        return (!teamsSelectionIsValid || !rostersSelectionIsValid || !groupsSelectionIsValid || nothingSelected || !csvSelectionIsValid)
+        const maxNumberOfTeams = this.state.isMaxNumberOfTeamsError;
+
+        return (!teamsSelectionIsValid || !rostersSelectionIsValid || !groupsSelectionIsValid || nothingSelected || !csvSelectionIsValid || maxNumberOfTeams);
     }
 
     private isNextBtnDisabled = () => {
@@ -1188,10 +1220,48 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         return resultedTeams;
     }
 
-    private static MAX_SELECTED_TEAMS_NUM: number = 20;
+    private onSelectAllTeams = () => {
+        var teams = this.getItems();
+        if (teams.length > this.state.maxNumberOfTeams) {
+            this.setState({ isMaxNumberOfTeamsError: true});
+        }
+        else {
+            this.setState({ isMaxNumberOfTeamsError: false});
+        }
+
+        this.setState({ selectedTeams: teams, selectedTeamsNum: teams.length });
+    }
+
+    private onUnselectAllTeams = () => {
+        this.setState({ isMaxNumberOfTeamsError: false });
+        this.setState({ selectedTeams: [], selectedTeamsNum: 0 });
+    }
+
+    private onSelectAllRosters = () => {
+        var teams = this.getItems();
+        if (teams.length > this.state.maxNumberOfTeams) {
+            this.setState({ isMaxNumberOfTeamsError: true});
+        }
+        else {
+            this.setState({ isMaxNumberOfTeamsError: false});
+        }
+
+        this.setState({ selectedRosters: teams, selectedRostersNum: teams.length });
+    }
+
+    private onUnselectAllRosters = () => {
+        this.setState({ isMaxNumberOfTeamsError: false });
+        this.setState({ selectedRosters: [], selectedRostersNum: 0 });
+    }
 
     private onTeamsChange = (event: any, itemsData: any) => {
-        if (itemsData.value.length > NewMessage.MAX_SELECTED_TEAMS_NUM) return;
+        if (itemsData.value.length > this.state.maxNumberOfTeams) {
+            this.setState({isMaxNumberOfTeamsError: true});
+        }
+        else {
+            this.setState({isMaxNumberOfTeamsError:false});
+        }
+        
         this.setState({
             selectedTeams: itemsData.value,
             selectedTeamsNum: itemsData.value.length,
@@ -1199,11 +1269,17 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             selectedRostersNum: 0,
             selectedGroups: [],
             selectedGroupsNum: 0
-        })
+        });
     }
 
     private onRostersChange = (event: any, itemsData: any) => {
-        if (itemsData.value.length > NewMessage.MAX_SELECTED_TEAMS_NUM) return;
+        if (itemsData.value.length > this.state.maxNumberOfTeams) {
+            this.setState({isMaxNumberOfTeamsError: true});
+        }
+        else {
+            this.setState({isMaxNumberOfTeamsError:false});
+        }
+
         this.setState({
             selectedRosters: itemsData.value,
             selectedRostersNum: itemsData.value.length,
@@ -1211,7 +1287,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             selectedTeamsNum: 0,
             selectedGroups: [],
             selectedGroupsNum: 0
-        })
+        });
     }
 
     private onGroupsChange = (event: any, itemsData: any) => {
@@ -1582,7 +1658,6 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         this.setState({ values });
 
         //set the error message if the links have wrong values
-        //alert(values.findIndex(element => element.includes("https://")));
         if (!(event.target.value === "" || event.target.value.toLowerCase().startsWith("https://"))) {
             this.setState({
                 errorButtonUrlMessage: this.localize("ErrorURLMessage")
@@ -1627,8 +1702,8 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         } else {
             document.getElementsByClassName('adaptiveCardContainer')[0].appendChild(renderedCard);
         }
-        const link = this.state.btnLink;
-        adaptiveCard.onExecuteAction = function (action) { window.open(link, '_blank'); }
+
+        adaptiveCard.onExecuteAction = function (action: OpenUrlAction) { window.open(action.url, '_blank'); }
     }
 }
 

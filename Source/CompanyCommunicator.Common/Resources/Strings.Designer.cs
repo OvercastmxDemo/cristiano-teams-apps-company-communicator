@@ -88,11 +88,38 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Canceled.
+        /// </summary>
+        public static string Canceled {
+            get {
+                return ResourceManager.GetString("Canceled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Button Tracking.
+        /// </summary>
+        public static string ColumnName_ButtonTracking {
+            get {
+                return ResourceManager.GetString("ColumnName_ButtonTracking", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Delivery Status.
         /// </summary>
         public static string ColumnName_DeliveryStatus {
             get {
                 return ResourceManager.GetString("ColumnName_DeliveryStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error.
+        /// </summary>
+        public static string ColumnName_Error {
+            get {
+                return ResourceManager.GetString("ColumnName_Error", resourceCulture);
             }
         }
         
@@ -120,6 +147,24 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Resources {
         public static string ColumnName_MessageTitle {
             get {
                 return ResourceManager.GetString("ColumnName_MessageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reactions.
+        /// </summary>
+        public static string ColumnName_Reactions {
+            get {
+                return ResourceManager.GetString("ColumnName_Reactions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Read Status.
+        /// </summary>
+        public static string ColumnName_ReadStatus {
+            get {
+                return ResourceManager.GetString("ColumnName_ReadStatus", resourceCulture);
             }
         }
         

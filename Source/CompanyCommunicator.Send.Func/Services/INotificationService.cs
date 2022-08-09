@@ -27,6 +27,13 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func.Services
         public Task<bool> IsPendingNotification(SendQueueMessageContent message);
 
         /// <summary>
+        /// Check if the notification is canceled.
+        /// </summary>
+        /// <param name="message">Send Queue message.</param>
+        /// <returns>true if the notification is canceled, false otherwise.</returns>
+        public Task<bool> IsNotificationCanceled(SendQueueMessageContent message);
+
+        /// <summary>
         /// Set SendNotification Throttled.
         /// </summary>
         /// <param name="sendRetryDelayNumberOfSeconds">Send Retry delay.</param>
@@ -37,6 +44,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func.Services
         /// Updates sent notification for the recipient.
         /// </summary>
         /// <param name="notificationId">The notification Id.</param>
+        /// <param name="activityId">The activity Id.</param>
         /// <param name="recipientId">The recipient's unique identifier.
         ///     If the recipient is a user, this should be the AAD Id.
         ///     If the recipient is a team, this should be the team Id.</param>
@@ -44,14 +52,17 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func.Services
         /// <param name="statusCode">Status code.</param>
         /// <param name="allSendStatusCodes">A comma separated list representing all of the status code responses received when trying
         /// to send the notification to the recipient.</param>
-        /// <param name="errorMessage">The error message to store in the database.</param>
+        /// <param name="errorMessage">The error reason to store in the database.</param>
+        /// <param name="exception">The exception message to store in the database.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public Task UpdateSentNotification(
             string notificationId,
+            string activityId,
             string recipientId,
             int totalNumberOfSendThrottles,
             int statusCode,
             string allSendStatusCodes,
-            string errorMessage);
+            string errorMessage,
+            string exception = null);
     }
 }
